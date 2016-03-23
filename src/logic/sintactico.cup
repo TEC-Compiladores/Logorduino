@@ -1,0 +1,150 @@
+/* ################# Delaracion de paquetes ################# */
+
+package logic;
+
+import java_cup.runtime.*;
+import java.io.FileReader;
+
+/* Código para el manejo de errores que se copia directamente a la clase generada */
+
+parser code{:
+
+  
+  /* Método que indica sobre un error sintactico encontrado */
+  public void report_error(String pMessage, Object pInfo) {
+    
+    StringBuilder string = new StringBuilder("Error");
+    
+    if(pInfo instanceof java_cup.runtime.Symbol) {
+      java_cup.runtime.Symbol symbol = ((java_cup.runtime.Symbol) pInfo);
+      
+      if (symbol.left >= 0) {
+	string.append(" en la linea " + (symbol.left+1));
+	
+	if (symbol.right >= 0)
+	  string.append(", columna " + (symbol.right+1));
+      }
+    }
+    
+    string.append(" : " + pMessage);
+    System.err.println(string);
+  }
+  
+  
+  /* Método que se llama cuando se encuentra un error del cual
+     no se puede recuperar */
+  public void report_fatal_error(String pMessage, Object pInfo) {
+    report_error(pMessage, pInfo);
+    System.exit(1);
+  }
+  
+  
+  public static void analizar(String[] args){
+    try {
+      AnalizadorSintactico sintactico = new AnalizadorSintactico(new AnalizadorLexico(new FileReader(args[0])));
+      Object resultado = sintactico.parse().value;
+      System.out.println("\n Finalizado!!");
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+:};
+
+
+
+/* ############### Declaracion de terminales y no terminales ############### */
+
+/* Los terminales son los tokens obtenidos por el analizador lexico */
+
+/* Palabras reservadas */
+terminal PROC, FIN, AV, RE, GD, GI, REPITE, PON_POS, PON_RUMBO, CENTRO;
+terminal HAZ, PARA, SB_LAPIZ, BJ_LAPIZ;
+
+terminal PC_IZQ, PC_DER, ESPACIO;
+
+terminal String VAR, PARAM, FUNC;
+terminal Integer ENTERO;
+
+
+/* No terminales utilizados para definir la gramatica */
+non terminal Object programa, listaOrdenes;
+non terminal String ordenComp, ordenSimp;
+non terminal Integer param;
+
+
+
+/* ############### Gramatica ############### */
+
+programa ::= programa listaOrdenes | listaOrdenes;
+
+listaOrdenes ::= ordenComp:s
+		    {: System.out.println(s); :}
+		  ;
+
+
+ordenComp ::= REPITE ESPACIO param:p ESPACIO PC_IZQ ordenComp:s PC_DER ESPACIO
+		{: RESULT = new String("REPETI " + p.intValue() + " veces " + s ); :}
+	      |
+	      PON_POS ESPACIO PC_IZQ param:p ESPACIO param:t PC_DER ESPACIO
+		{:
+		  RESULT = new String("ME MOVI A X: " + p.intValue() + " Y: " + t.intValue());
+		  :}
+	      |
+	      ordenSimp:s
+		{: RESULT = s; :}
+	      ;
+	      
+	      
+	      
+ordenSimp ::= AV ESPACIO param:p ESPACIO
+		{: RESULT = new String("AVANCE: " + p.intValue()); :}
+	      |
+	      RE ESPACIO param:p ESPACIO
+		{: RESULT = new String("RETROCEDI: " + p.intValue()); :}
+	      |
+	      GD ESPACIO param:p ESPACIO
+		{: RESULT = new String("GIRE " + p.intValue() + " A LA DERECHA"); :}
+	      |
+	      GI ESPACIO param:p ESPACIO
+		{: RESULT = new String("GIRE " + p.intValue() + " A LA IZQUIERDA"); :}
+	      |
+	      PON_RUMBO ESPACIO param:p ESPACIO
+		{: RESULT = new String("GIRE: " + p.intValue() + " grados"); :}
+	      |
+	      CENTRO ESPACIO
+		{: RESULT = new String("ME COLOQUE EN EL CENTRO"); :}
+	      |
+	      SB_LAPIZ ESPACIO
+		{: RESULT = new String("SUBI EL LAPIZ"); :}
+	      |
+	      BJ_LAPIZ ESPACIO
+		{: RESULT = new String("BAJE EL LAPIZ"); :}
+	      ;
+	      
+	      
+	/* VAR:v
+	    {: RESULT = new Integer(v.intValue()); :}
+	  | */      
+param ::= ENTERO:e
+	    {: RESULT = e; :}
+	  ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
