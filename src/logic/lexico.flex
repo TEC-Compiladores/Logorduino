@@ -9,7 +9,7 @@ import java.io.Reader;
 /* ############## Declaración de opciones de JFlex ############## */
 %%
 
-%class AnalizadorLexico
+%class LexicalParser
 
 %line
 %column
@@ -45,7 +45,7 @@ Entero = 0 | [1-9][0-9]*
 Identificador = [A-Za-z]+[Entero]*
 
 %state VAR
-%state STRING
+%state PARAM
 
 %%
 
@@ -83,7 +83,7 @@ Identificador = [A-Za-z]+[Entero]*
   "["					{ return symbol(sym.PC_IZQ); }
   "]"					{ return symbol(sym.PC_DER); }
   
-  ":"					{ string.setLength(0); yybegin(STRING); }
+  ":"					{ string.setLength(0); yybegin(PARAM); }
   
   "\""					{ string.setLength(0); yybegin(VAR); }
   
@@ -96,7 +96,7 @@ Identificador = [A-Za-z]+[Entero]*
 }
 
 
-<STRING> {
+<PARAM> {
   
   {Espacio}				{ yybegin(YYINITIAL); return symbol(sym.PARAM, string.toString()); }
   

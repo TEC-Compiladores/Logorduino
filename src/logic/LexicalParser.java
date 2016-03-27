@@ -15,7 +15,7 @@ import java.io.Reader;
  * <a href="http://www.jflex.de/">JFlex</a> 1.6.1
  * from the specification file <tt>/home/pablo/workspace/Logorduino/src/logic/lexico.flex</tt>
  */
-class AnalizadorLexico implements java_cup.runtime.Scanner {
+class LexicalParser implements java_cup.runtime.Scanner {
 
   /** This character denotes the end of file */
   public static final int YYEOF = -1;
@@ -26,7 +26,7 @@ class AnalizadorLexico implements java_cup.runtime.Scanner {
   /** lexical states */
   public static final int YYINITIAL = 0;
   public static final int VAR = 2;
-  public static final int STRING = 4;
+  public static final int PARAM = 4;
 
   /**
    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -310,7 +310,7 @@ class AnalizadorLexico implements java_cup.runtime.Scanner {
    *
    * @param   in  the java.io.Reader to read input from.
    */
-  AnalizadorLexico(java.io.Reader in) {
+  LexicalParser(java.io.Reader in) {
     this.zzReader = in;
   }
 
@@ -715,7 +715,7 @@ class AnalizadorLexico implements java_cup.runtime.Scanner {
             }
           case 29: break;
           case 7: 
-            { string.setLength(0); yybegin(STRING);
+            { string.setLength(0); yybegin(PARAM);
             }
           case 30: break;
           case 8: 

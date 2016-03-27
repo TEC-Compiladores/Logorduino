@@ -1,2 +1,1 @@
-avanza 50 gd 20 re 60 centro
-repite 10 [av 10 gd 30 ]
+repite 40 [av 60 ]

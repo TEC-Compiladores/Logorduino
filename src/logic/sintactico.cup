@@ -4,13 +4,60 @@ package logic;
 
 import java_cup.runtime.*;
 import java.io.FileReader;
+import java.io.StringReader;
 
+
+
+/* ################# Parser Code ################# */
 /* Código para el manejo de errores que se copia directamente a la clase generada */
 
 parser code{:
+  
+  private Core _core;
+  
+  private boolean _debug = false;
+  
+  
+  public SintacticParser(Core pCore, boolean pDebug){
+     super();
+     _core = pCore;
+    _debug = pDebug;
+  }
 
   
-  /* Método que indica sobre un error sintactico encontrado */
+  
+    /**
+     * Método que analiza un archivo txt
+     */
+    public void analizarTxt(String pFileName){
+    try {
+      SintacticParser sintactico = new SintacticParser(new LexicalParser(new FileReader(pFileName)));
+      Object resultado = sintactico.parse().value;
+      if(_debug)
+	System.out.println(ConstantsLogic.SIN_FINISH_PARSE_TXT + pFileName);
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
+  
+  
+  public void analizarEntrada(StringReader pReader){
+    try {
+      SintacticParser sintactico = new SintacticParser(new LexicalParser(pReader));
+      Object resultado = sintactico.parse().value;
+      if(_debug)
+	System.out.println(ConstantsLogic.SIN_FINISH_PARSE_ENTRY);
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+  }
+  
+
+  
+  /**
+   * Método que indica sobre un error sintactico encontrado
+   */
   public void report_error(String pMessage, Object pInfo) {
     
     StringBuilder string = new StringBuilder("Error");
@@ -31,22 +78,31 @@ parser code{:
   }
   
   
-  /* Método que se llama cuando se encuentra un error del cual
-     no se puede recuperar */
+  /**
+   * Método que se llama cuando se encuentra un error del cual
+   * no se puede recuperar
+   */    
   public void report_fatal_error(String pMessage, Object pInfo) {
     report_error(pMessage, pInfo);
     System.exit(1);
   }
   
   
-  public static void analizar(String[] args){
-    try {
-      AnalizadorSintactico sintactico = new AnalizadorSintactico(new AnalizadorLexico(new FileReader(args[0])));
-      Object resultado = sintactico.parse().value;
-      System.out.println("\n Finalizado!!");
-    } catch(Exception e) {
-      e.printStackTrace();
-    }
+  /**
+   * Método que es llamado cuando se encuentra un error de sintaxis
+   * del cual no es posible recuperarse
+   */
+  public void unrecovered_syntax_error(Symbol cur_token){
+    String report = "No se logro recuperar del error, se detuvo el parseo";
+    report_fatal_error(report, null);
+  }
+  
+  
+  /**
+   * Método que es llamado cuando se encuentra un error de sintaxis
+   */
+  public void syntax_error(Symbol cur_token){
+     report_error("Error de sintaxis", null);
   }
 
 :};
@@ -61,74 +117,99 @@ parser code{:
 terminal PROC, FIN, AV, RE, GD, GI, REPITE, PON_POS, PON_RUMBO, CENTRO;
 terminal HAZ, PARA, SB_LAPIZ, BJ_LAPIZ;
 
+/* Caracteres */
 terminal PC_IZQ, PC_DER, ESPACIO;
 
+/* Variables, parametros, nombre de funciones y valor de enteros */
 terminal String VAR, PARAM, FUNC;
 terminal Integer ENTERO;
 
 
 /* No terminales utilizados para definir la gramatica */
-non terminal Object programa, listaOrdenes;
-non terminal String ordenComp, ordenSimp;
+non terminal Object programa, ordenParcial, espacios;
+non terminal String orden, listaOrdenes;
 non terminal Integer param;
 
 
 
 /* ############### Gramatica ############### */
 
-programa ::= programa listaOrdenes | listaOrdenes;
+/**
+ * Raíz de la gramatica
+ * Un programa puede estar formado por un comando del lenguaje
+ * o varios comandos seguidos por espacio
+ */
+programa ::= programa ordenParcial | ordenParcial;
 
-listaOrdenes ::= ordenComp:s
-		    {: System.out.println(s); :}
-		  ;
+ordenParcial ::= 
+		 orden:s
+		   {: System.out.println(s); :}
+		 ;
 
 
-ordenComp ::= REPITE ESPACIO param:p ESPACIO PC_IZQ ordenComp:s PC_DER ESPACIO
-		{: RESULT = new String("REPETI " + p.intValue() + " veces " + s ); :}
-	      |
-	      PON_POS ESPACIO PC_IZQ param:p ESPACIO param:t PC_DER ESPACIO
-		{:
-		  RESULT = new String("ME MOVI A X: " + p.intValue() + " Y: " + t.intValue());
-		  :}
-	      |
-	      ordenSimp:s
-		{: RESULT = s; :}
-	      ;
+/**
+ * Una orden puede estar formada por:
+ * 
+ * ** El comando "repite", el cual puede tener un programa dentro
+ *    de su argumento (lista de comandos)
+ * ** Una lista de comandos
+ */
+orden ::= 
+	  REPITE espacios param:p espacios PC_IZQ programa PC_DER espacios
+	    {: RESULT = new String("REPETI " + p.intValue() + " veces "  ); :}
+	  |
+	  listaOrdenes:s
+	    {: RESULT = s; :}
+	  ;
 	      
 	      
 	      
-ordenSimp ::= AV ESPACIO param:p ESPACIO
-		{: RESULT = new String("AVANCE: " + p.intValue()); :}
-	      |
-	      RE ESPACIO param:p ESPACIO
-		{: RESULT = new String("RETROCEDI: " + p.intValue()); :}
-	      |
-	      GD ESPACIO param:p ESPACIO
-		{: RESULT = new String("GIRE " + p.intValue() + " A LA DERECHA"); :}
-	      |
-	      GI ESPACIO param:p ESPACIO
-		{: RESULT = new String("GIRE " + p.intValue() + " A LA IZQUIERDA"); :}
-	      |
-	      PON_RUMBO ESPACIO param:p ESPACIO
-		{: RESULT = new String("GIRE: " + p.intValue() + " grados"); :}
-	      |
-	      CENTRO ESPACIO
-		{: RESULT = new String("ME COLOQUE EN EL CENTRO"); :}
-	      |
-	      SB_LAPIZ ESPACIO
-		{: RESULT = new String("SUBI EL LAPIZ"); :}
-	      |
-	      BJ_LAPIZ ESPACIO
-		{: RESULT = new String("BAJE EL LAPIZ"); :}
-	      ;
+listaOrdenes ::= 
+		 PON_POS espacios PC_IZQ param:p espacios param:t PC_DER espacios
+		   {: RESULT = new String("ME MOVI A X: " + p.intValue() + " Y: " + t.intValue()); :}
+		 |
+		 AV espacios param:p espacios
+		   {: RESULT = new String("AVANCE: " + p.intValue()); :}
+		 |
+		 RE espacios param:p espacios
+		   {: RESULT = new String("RETROCEDI: " + p.intValue()); :}
+		 |
+		 GD espacios param:p espacios
+		   {: RESULT = new String("GIRE " + p.intValue() + " A LA DERECHA"); :}
+		 |
+		 GI espacios param:p espacios
+		   {: RESULT = new String("GIRE " + p.intValue() + " A LA IZQUIERDA"); :}
+		 |
+		 PON_RUMBO espacios param:p espacios
+		   {: RESULT = new String("GIRE: " + p.intValue() + " grados"); :}
+		 |
+		 CENTRO espacios
+		   {: RESULT = new String("ME COLOQUE EN EL CENTRO"); :}
+		 |
+		 SB_LAPIZ espacios
+		   {: RESULT = new String("SUBI EL LAPIZ"); :}
+		 |
+		 BJ_LAPIZ espacios
+		   {: RESULT = new String("BAJE EL LAPIZ"); :}
+		 |
+		 error
+		 ;
 	      
 	      
 	/* VAR:v
 	    {: RESULT = new Integer(v.intValue()); :}
 	  | */      
-param ::= ENTERO:e
+param ::= 
+	  ENTERO:e
 	    {: RESULT = e; :}
 	  ;
+	  
+	  
+espacios ::=
+	     espacios ESPACIO
+	     |
+	     ESPACIO
+	     ;
 
 
 
