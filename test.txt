@@ -1,1 +1,1 @@
-repite 40 [av 60 ]
+haz "lado 60

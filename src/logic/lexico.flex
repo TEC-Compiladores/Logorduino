@@ -21,6 +21,10 @@ import java.io.Reader;
 %{
   
     StringBuffer string = new StringBuffer();
+    
+    
+    public LexicalParser() {
+  	}
 
     private Symbol symbol(int pType) {
         return new Symbol(pType, yyline, yycolumn);
@@ -30,6 +34,11 @@ import java.io.Reader;
     private Symbol symbol(int pType, Object pValue) {
         return new Symbol(pType, yyline, yycolumn, pValue);
     }
+    
+    
+    public void setReader(java.io.Reader pReader) {
+    	this.zzReader = pReader;
+  	}
   
 %}
 
@@ -41,11 +50,14 @@ Salto = \r|\n|\r\n
 Espacio = {Salto} | [ \t\f]
 
 Entero = 0 | [1-9][0-9]*
+Flotante = 0 | 0\.{Entero} | {Entero}\.{Entero}
 
-Identificador = [A-Za-z]+[Entero]*
+Identificador = [A-Z|a-z]+[Entero]*
 
-%state VAR
-%state PARAM
+Variable = \"{Identificador}
+Parametro = :{Identificador}
+
+
 
 %%
 
@@ -74,6 +86,8 @@ Identificador = [A-Za-z]+[Entero]*
   
   "centro"				{ return symbol(sym.CENTRO); }
   
+  "haz"					{ return symbol(sym.HAZ); }
+  
   "subelapiz"				{ return symbol(sym.SB_LAPIZ); }
   "sl"					{ return symbol(sym.SB_LAPIZ); }
   
@@ -83,32 +97,18 @@ Identificador = [A-Za-z]+[Entero]*
   "["					{ return symbol(sym.PC_IZQ); }
   "]"					{ return symbol(sym.PC_DER); }
   
-  ":"					{ string.setLength(0); yybegin(PARAM); }
+  {Parametro}					{ return symbol(sym.PARAM, new String( yytext().substring(1, yytext().length()))); }
   
-  "\""					{ string.setLength(0); yybegin(VAR); }
+  {Variable}					{ return symbol(sym.VAR, new String( yytext().substring(1, yytext().length()))); }
   
   {Espacio}				{ return symbol(sym.ESPACIO); }
+  
+  {Flotante}				{ return symbol(sym.FLOAT, new Float(Float.parseFloat(yytext()))); }
   
   {Entero}				{ return symbol(sym.ENTERO, new Integer(yytext())); }
   
   {Identificador}			{ return symbol(sym.FUNC, new String(yytext())); }  
   
-}
-
-
-<PARAM> {
-  
-  {Espacio}				{ yybegin(YYINITIAL); return symbol(sym.PARAM, string.toString()); }
-  
-  {Identificador}			{ string.append(yytext()); }
-}
-
-
-<VAR> {
-  
-  {Espacio}				{ yybegin(YYINITIAL); return symbol(sym.VAR, string.toString()); }
-  
-  {Identificador}			{ string.append(yytext());}
 }
 
 

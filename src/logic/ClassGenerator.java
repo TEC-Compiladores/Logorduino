@@ -14,7 +14,8 @@ public class ClassGenerator implements ConstantsLogic {
 		String archSintactico = CUP_FILE_PATH;
 
 		String[] alexico = { archLexico };
-		String[] asintactico = { "-parser", "SintacticParser", archSintactico };
+		String[] asintactico = { "-nowarn", "-nosummary", "-parser", "SintacticParser",
+				archSintactico };
 		jflex.Main.main(alexico);
 		try {
 			java_cup.Main.main(asintactico);
@@ -24,7 +25,7 @@ public class ClassGenerator implements ConstantsLogic {
 		boolean mvAS = moveFile(GENER_CUP_CLASS_NAME, pDebug);
 		boolean mvSym = moveFile("sym.java", pDebug);
 		if (mvAS && mvSym) {
-			System.exit(0);
+			if (pDebug) System.out.println(CLASS_GENERATOR + "Se movieron los archivos a src");
 		}
 	}
 

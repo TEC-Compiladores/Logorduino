@@ -1,17 +1,48 @@
 package logic;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
 
 
 public class Core {
 
 	private boolean _debug;
+	private Interpreter _interpreter;
+	private LexicalParser _lexical;
+	private SintacticParser _sintactic;
 
 
 
 	public Core(boolean pGenerate, boolean pDebug) {
 		_debug = pDebug;
 		if (pGenerate) ClassGenerator.generate(_debug);
+
+		_lexical = new LexicalParser();
+		_sintactic = new SintacticParser(this, _lexical, _debug);
+		_interpreter = new Interpreter(_debug);
+
+		this.parseTxt("test.txt");
 	}
+
+
+
+	public void createVar(String pVar, Number pValue) {
+		_interpreter.insertVar(pVar, pValue);
+	}
+
+
+
+	public void parseTxt(String pFileName) {
+		try {
+			_lexical.setReader(new FileReader(pFileName));
+			_sintactic.analizarTxt("test.txt");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 
 
 

@@ -6,23 +6,31 @@ import java_cup.runtime.*;
 import java.io.FileReader;
 import java.io.StringReader;
 
+action code{:
+    
 
+  
+:}
 
 /* ################# Parser Code ################# */
 /* Código para el manejo de errores que se copia directamente a la clase generada */
 
 parser code{:
   
-  private Core _core;
+  public Core _core;
   
   private boolean _debug = false;
   
   
-  public SintacticParser(Core pCore, boolean pDebug){
-     super();
+  public SintacticParser(Core pCore, java_cup.runtime.Scanner pScanner, boolean pDebug){
+     super(pScanner);
      _core = pCore;
     _debug = pDebug;
+    
   }
+  
+  
+ 
 
   
   
@@ -31,14 +39,15 @@ parser code{:
      */
     public void analizarTxt(String pFileName){
     try {
-      SintacticParser sintactico = new SintacticParser(new LexicalParser(new FileReader(pFileName)));
-      Object resultado = sintactico.parse().value;
+      //SintacticParser sintactico = new SintacticParser(new LexicalParser(new FileReader(pFileName)));
+      Object resultado = this.parse().value;
       if(_debug)
 	System.out.println(ConstantsLogic.SIN_FINISH_PARSE_TXT + pFileName);
     } catch(Exception e) {
       e.printStackTrace();
     }
   }
+ 
   
   
   
@@ -102,7 +111,7 @@ parser code{:
    * Método que es llamado cuando se encuentra un error de sintaxis
    */
   public void syntax_error(Symbol cur_token){
-     report_error("Error de sintaxis", null);
+     report_error("Error de sintaxis", cur_token);
   }
 
 :};
@@ -114,7 +123,7 @@ parser code{:
 /* Los terminales son los tokens obtenidos por el analizador lexico */
 
 /* Palabras reservadas */
-terminal PROC, FIN, AV, RE, GD, GI, REPITE, PON_POS, PON_RUMBO, CENTRO;
+terminal FIN, AV, RE, GD, GI, REPITE, PON_POS, PON_RUMBO, CENTRO;
 terminal HAZ, PARA, SB_LAPIZ, BJ_LAPIZ;
 
 /* Caracteres */
@@ -123,12 +132,13 @@ terminal PC_IZQ, PC_DER, ESPACIO;
 /* Variables, parametros, nombre de funciones y valor de enteros */
 terminal String VAR, PARAM, FUNC;
 terminal Integer ENTERO;
+terminal Float FLOAT;
 
 
 /* No terminales utilizados para definir la gramatica */
 non terminal Object programa, ordenParcial, espacios;
 non terminal String orden, listaOrdenes;
-non terminal Integer param;
+non terminal Number param;
 
 
 
@@ -192,6 +202,10 @@ listaOrdenes ::=
 		 BJ_LAPIZ espacios
 		   {: RESULT = new String("BAJE EL LAPIZ"); :}
 		 |
+ 		 HAZ espacios VAR:f espacios param:p espacios
+		   {: RESULT = new String("Variable: " + f + " Valor: " + p);
+		   	  parser._core.createVar(f, p); :}
+		 |
 		 error
 		 ;
 	      
@@ -199,9 +213,12 @@ listaOrdenes ::=
 	/* VAR:v
 	    {: RESULT = new Integer(v.intValue()); :}
 	  | */      
-param ::= 
+param ::=
+	  FLOAT:p
+	    {: RESULT = p; :}
+	  |
 	  ENTERO:e
-	    {: RESULT = e; :}
+	  	{: RESULT = e; :}
 	  ;
 	  
 	  
@@ -210,6 +227,8 @@ espacios ::=
 	     |
 	     ESPACIO
 	     ;
+	     
+	     
 
 
 
