@@ -3,22 +3,28 @@ package logic;
 import java.util.HashMap;
 import java.util.Map;
 
+import logic.server.Arduino;
+
 
 public class Interpreter {
 
 	private Map<String, Number> _variables;
+	private Arduino _arduino;
 
 
 
-	public Interpreter(boolean pDebug) {
+	public Interpreter(Arduino pArduino, boolean pDebug) {
 
 		_variables = new HashMap<String, Number>();
+		_arduino = pArduino;
 	}
 
 
 
 	/**
-	 * Método para almacenar el nombre y valor de una variable creada
+	 * Método que permite crear las variables ingresadas por el usuario Se
+	 * almacena dentro de un Map el nombre de la variable como clave, y su valor
+	 * como un objeto que hereda de la clase Number
 	 * 
 	 * @param pVar
 	 *            Nombre de la variable
@@ -28,13 +34,12 @@ public class Interpreter {
 	public void insertVar(String pVar, Number pValue) {
 		_variables.put(pVar, pValue);
 
-		System.out.println(pVar + ": " + pValue);
 	}
 
 
 
 	/**
-	 * Método que obtener el valor de una variable
+	 * Método que permite obtener el valor de una variable
 	 * 
 	 * @param pVar
 	 *            Nombre de la variable

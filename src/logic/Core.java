@@ -3,12 +3,15 @@ package logic;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
+import logic.server.Arduino;
+
 
 
 public class Core {
 
 	private boolean _debug;
 	private Interpreter _interpreter;
+	private Arduino _arduino;
 	private LexicalParser _lexical;
 	private SintacticParser _sintactic;
 
@@ -20,13 +23,29 @@ public class Core {
 
 		_lexical = new LexicalParser();
 		_sintactic = new SintacticParser(this, _lexical, _debug);
-		_interpreter = new Interpreter(_debug);
+		_arduino = new Arduino(_debug);
+		_interpreter = new Interpreter(_arduino, _debug);
 
 		this.parseTxt("test.txt");
 	}
 
 
 
+	public Interpreter getInterpreter() {
+		return _interpreter;
+	}
+
+
+
+	/**
+	 * Método que indica a la clase Interpreter que se debe crear una nueva
+	 * variable
+	 * 
+	 * @param pVar
+	 *            Nombre de la variable
+	 * @param pValue
+	 *            Valor de la variable
+	 */
 	public void createVar(String pVar, Number pValue) {
 		_interpreter.insertVar(pVar, pValue);
 	}

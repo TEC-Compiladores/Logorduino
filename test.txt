@@ -1,1 +1,1 @@
-haz "lado 60
+centro repite 60 [av 70 repite 9 [bl ] re 50 ]

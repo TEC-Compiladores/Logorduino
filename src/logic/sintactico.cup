@@ -30,9 +30,6 @@ parser code{:
   }
   
   
- 
-
-  
   
     /**
      * Método que analiza un archivo txt
@@ -113,6 +110,7 @@ parser code{:
   public void syntax_error(Symbol cur_token){
      report_error("Error de sintaxis", cur_token);
   }
+  
 
 :};
 
@@ -149,7 +147,12 @@ non terminal Number param;
  * Un programa puede estar formado por un comando del lenguaje
  * o varios comandos seguidos por espacio
  */
-programa ::= programa ordenParcial | ordenParcial;
+programa ::= programa ordenParcial
+				{: System.out.println("PROGRAMA"); :}
+			 |
+			 ordenParcial
+			 	{: System.out.println("ORDEN PARCIAL"); :}
+			 ;
 
 ordenParcial ::= 
 		 orden:s
@@ -179,7 +182,8 @@ listaOrdenes ::=
 		   {: RESULT = new String("ME MOVI A X: " + p.intValue() + " Y: " + t.intValue()); :}
 		 |
 		 AV espacios param:p espacios
-		   {: RESULT = new String("AVANCE: " + p.intValue()); :}
+		   {: 
+		   		RESULT = new String("AVANCE: " + p.intValue()); :}
 		 |
 		 RE espacios param:p espacios
 		   {: RESULT = new String("RETROCEDI: " + p.intValue()); :}
@@ -204,7 +208,7 @@ listaOrdenes ::=
 		 |
  		 HAZ espacios VAR:f espacios param:p espacios
 		   {: RESULT = new String("Variable: " + f + " Valor: " + p);
-		   	  parser._core.createVar(f, p); :}
+		   	  parser._core.getInterpreter().insertVar(f, p); :}
 		 |
 		 error
 		 ;
@@ -219,6 +223,10 @@ param ::=
 	  |
 	  ENTERO:e
 	  	{: RESULT = e; :}
+	  |
+	  PARAM:v
+	  	{: Number varValue = parser._core.getInterpreter().getVarValue(v);
+	  	   RESULT = varValue; :}
 	  ;
 	  
 	  
@@ -228,6 +236,7 @@ espacios ::=
 	     ESPACIO
 	     ;
 	     
+	  
 	     
 
 
