@@ -1,6 +1,7 @@
 /* ################# Delaracion de paquetes ################# */
 
-package logic;
+package logic.interpreter;
+import java.util.ArrayList;
 
 import java_cup.runtime.*;
 import java.io.FileReader;
@@ -17,14 +18,14 @@ action code{:
 
 parser code{:
   
-  public Core _core;
+  public Interpreter _interpreter;
   
   private boolean _debug = false;
   
   
-  public SintacticParser(Core pCore, java_cup.runtime.Scanner pScanner, boolean pDebug){
+  public SintacticParser(Interpreter pInterpreter, java_cup.runtime.Scanner pScanner, boolean pDebug){
      super(pScanner);
-     _core = pCore;
+     _interpreter = pInterpreter;
     _debug = pDebug;
     
   }
@@ -38,8 +39,18 @@ parser code{:
     try {
       //SintacticParser sintactico = new SintacticParser(new LexicalParser(new FileReader(pFileName)));
       Object resultado = this.parse().value;
+      if(resultado instanceof LProgram){
+      	LProgram result = (LProgram) resultado;
+      	result.prepare();
+      	result.execute();
+      }
+      else{
+      	LPartialOrder result = (LPartialOrder) resultado;
+      	result.prepare();
+      	result.execute();
+      } 
       if(_debug)
-	System.out.println(ConstantsLogic.SIN_FINISH_PARSE_TXT + pFileName);
+	System.out.println(ConstInterpreter.SIN_FINISH_PARSE_TXT + pFileName);
     } catch(Exception e) {
       e.printStackTrace();
     }
@@ -53,7 +64,7 @@ parser code{:
       SintacticParser sintactico = new SintacticParser(new LexicalParser(pReader));
       Object resultado = sintactico.parse().value;
       if(_debug)
-	System.out.println(ConstantsLogic.SIN_FINISH_PARSE_ENTRY);
+	System.out.println(ConstInterpreter.SIN_FINISH_PARSE_ENTRY);
     } catch(Exception e) {
       e.printStackTrace();
     }
@@ -134,9 +145,15 @@ terminal Float FLOAT;
 
 
 /* No terminales utilizados para definir la gramatica */
-non terminal Object programa, ordenParcial, espacios;
-non terminal String orden, listaOrdenes;
-non terminal Number param;
+non terminal LProgram programa;
+non terminal LPartialOrder ordenParcial;
+non terminal LOrder orden;
+non terminal LListOrders listaOrdenes;
+
+non terminal Object param;
+non terminal Object espacios;
+
+
 
 
 
@@ -147,16 +164,19 @@ non terminal Number param;
  * Un programa puede estar formado por un comando del lenguaje
  * o varios comandos seguidos por espacio
  */
-programa ::= programa ordenParcial
-				{: System.out.println("PROGRAMA"); :}
+programa ::= programa:p ordenParcial:o
+				{: RESULT = new LProgram(p, o); 
+				   //System.out.println("PROGRAMA"); :}
 			 |
-			 ordenParcial
-			 	{: System.out.println("ORDEN PARCIAL"); :}
+			 ordenParcial:o
+			 	{: RESULT = new LProgram(o); 
+			 	//System.out.println("ORDEN PARCIAL"); :}
 			 ;
 
 ordenParcial ::= 
 		 orden:s
-		   {: System.out.println(s); :}
+		   {: RESULT = new LPartialOrder(s);
+		      //System.out.println(s); :}
 		 ;
 
 
@@ -168,65 +188,87 @@ ordenParcial ::=
  * ** Una lista de comandos
  */
 orden ::= 
-	  REPITE espacios param:p espacios PC_IZQ programa PC_DER espacios
-	    {: RESULT = new String("REPETI " + p.intValue() + " veces "  ); :}
+	  REPITE espacios param:p espacios PC_IZQ programa:r PC_DER espacios
+	    {: LRepeat repeat = new LRepeat(p, r);
+	       RESULT = new LOrder(repeat);
+	       //RESULT = new String("REPETI " + p.intValue() + " veces "  ); :}
 	  |
 	  listaOrdenes:s
-	    {: RESULT = s; :}
+	    {: RESULT = new LOrder(s);
+	       //RESULT = s; :}
 	  ;
 	      
 	      
 	      
 listaOrdenes ::= 
 		 PON_POS espacios PC_IZQ param:p espacios param:t PC_DER espacios
-		   {: RESULT = new String("ME MOVI A X: " + p.intValue() + " Y: " + t.intValue()); :}
+		   {: ArrayList<Object> params = new ArrayList<Object>();
+		   	  params.add(p); params.add(t);
+		      RESULT = new LListOrders(ConstInterpreter.CMD_POS, params); 
+		      //RESULT = new String("ME MOVI A X: " + p.intValue() + " Y: " + t.intValue()); :}
 		 |
 		 AV espacios param:p espacios
-		   {: 
-		   		RESULT = new String("AVANCE: " + p.intValue()); :}
+		   {: ArrayList<Object> params = new ArrayList<Object>();
+		   	  params.add(p);
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_AV, params); 
+		   	  //RESULT = new String("AVANCE: " + p.intValue()); :}
 		 |
 		 RE espacios param:p espacios
-		   {: RESULT = new String("RETROCEDI: " + p.intValue()); :}
+		   {: ArrayList<Object> params = new ArrayList<Object>();
+		   	  params.add(p);
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RE, params);  
+		   //RESULT = new String("RETROCEDI: " + p.intValue()); :}
 		 |
 		 GD espacios param:p espacios
-		   {: RESULT = new String("GIRE " + p.intValue() + " A LA DERECHA"); :}
+		   {: ArrayList<Object> params = new ArrayList<Object>();
+		   	  params.add(p);
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GD, params);  
+		      //RESULT = new String("GIRE " + p.intValue() + " A LA DERECHA"); :}
 		 |
 		 GI espacios param:p espacios
-		   {: RESULT = new String("GIRE " + p.intValue() + " A LA IZQUIERDA"); :}
+		   {: ArrayList<Object> params = new ArrayList<Object>();
+		   	  params.add(p);
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GI, params);  
+		      //RESULT = new String("GIRE " + p.intValue() + " A LA IZQUIERDA"); :}
 		 |
 		 PON_RUMBO espacios param:p espacios
-		   {: RESULT = new String("GIRE: " + p.intValue() + " grados"); :}
+		   {: ArrayList<Object> params = new ArrayList<Object>();
+		   	  params.add(p);
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RUMBO, params);  
+		      //RESULT = new String("GIRE: " + p.intValue() + " grados"); :}
 		 |
 		 CENTRO espacios
-		   {: RESULT = new String("ME COLOQUE EN EL CENTRO"); :}
+		   {: RESULT = new LListOrders(ConstInterpreter.CMD_CENTER, null);  
+		      //RESULT = new String("ME COLOQUE EN EL CENTRO"); :}
 		 |
 		 SB_LAPIZ espacios
-		   {: RESULT = new String("SUBI EL LAPIZ"); :}
+		   {: RESULT = new LListOrders(ConstInterpreter.CMD_SL, null);  
+		      //RESULT = new String("SUBI EL LAPIZ"); :}
 		 |
 		 BJ_LAPIZ espacios
-		   {: RESULT = new String("BAJE EL LAPIZ"); :}
+		   {: RESULT = new LListOrders(ConstInterpreter.CMD_BL, null);  
+		      //RESULT = new String("BAJE EL LAPIZ"); :}
 		 |
  		 HAZ espacios VAR:f espacios param:p espacios
-		   {: RESULT = new String("Variable: " + f + " Valor: " + p);
-		   	  parser._core.getInterpreter().insertVar(f, p); :}
+		   {: ArrayList<Object> params = new ArrayList<Object>();
+		   	  params.add(f); params.add(p);
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_HAZ, params);   
+		      //RESULT = new String("Variable: " + f + " Valor: " + p); :}
 		 |
 		 error
 		 ;
-	      
-	      
-	/* VAR:v
-	    {: RESULT = new Integer(v.intValue()); :}
-	  | */      
+  
+	  
+	     
 param ::=
 	  FLOAT:p
-	    {: RESULT = p; :}
+	    {: RESULT = new Float(p); :}
 	  |
 	  ENTERO:e
-	  	{: RESULT = e; :}
+	  	{: RESULT = new Integer(e); :}
 	  |
 	  PARAM:v
-	  	{: Number varValue = parser._core.getInterpreter().getVarValue(v);
-	  	   RESULT = varValue; :}
+	  	{: RESULT = new String(v); :}
 	  ;
 	  
 	  

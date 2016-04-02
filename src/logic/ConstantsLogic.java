@@ -10,9 +10,7 @@ public interface ConstantsLogic {
 
 	// ######### CLASS SINTACTIC PARSER #########
 
-	// Debug
-	public static final String SIN_FINISH_PARSE_TXT = "Se terminó de analizar el archivo: ";
-	public static final String SIN_FINISH_PARSE_ENTRY = "Se terminó de analizar la entrada";
+
 
 	// Arduino constants
 	public static final int CMD_AV = 0;
@@ -24,6 +22,7 @@ public interface ConstantsLogic {
 	public static final int CMD_CENTER = 6;
 	public static final int CMD_SL = 7;
 	public static final int CMD_BL = 8;
+	public static final int CMD_HAZ = 9;
 
 
 	// ######### CLASS CLASSGENERATOR #########
@@ -40,10 +39,11 @@ public interface ConstantsLogic {
 	public static final String PROJECT_PATH = RELATIVE_PATH.toAbsolutePath().toString();
 	public static final String PROJECT_SRC_PATH = PROJECT_PATH + SLASH + "src";
 	public static final String PROJECT_LOGIC_PACKAGE = "logic";
-	public static final String LEX_FILE_PATH = PROJECT_SRC_PATH + SLASH + "logic" + SLASH
-			+ GENER_FLEX_FILENAME;
-	public static final String CUP_FILE_PATH = PROJECT_SRC_PATH + SLASH + "logic" + SLASH
-			+ GENER_CUP_FILENAME;
+	public static final String PROJECT_INTERPRETER_PACKAGE = "logic/interpreter";
+	public static final String LEX_FILE_PATH = PROJECT_SRC_PATH + SLASH
+			+ PROJECT_INTERPRETER_PACKAGE + SLASH + GENER_FLEX_FILENAME;
+	public static final String CUP_FILE_PATH = PROJECT_SRC_PATH + SLASH
+			+ PROJECT_INTERPRETER_PACKAGE + SLASH + GENER_CUP_FILENAME;
 
 	// Debug
 	public static final String GENER_MOVE_FILE = "Moviendo el archivo: ";

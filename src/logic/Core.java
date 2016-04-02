@@ -1,8 +1,6 @@
 package logic;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-
+import logic.interpreter.Interpreter;
 import logic.server.Arduino;
 
 
@@ -12,21 +10,16 @@ public class Core {
 	private boolean _debug;
 	private Interpreter _interpreter;
 	private Arduino _arduino;
-	private LexicalParser _lexical;
-	private SintacticParser _sintactic;
+
 
 
 
 	public Core(boolean pGenerate, boolean pDebug) {
 		_debug = pDebug;
-		if (pGenerate) ClassGenerator.generate(_debug);
-
-		_lexical = new LexicalParser();
-		_sintactic = new SintacticParser(this, _lexical, _debug);
 		_arduino = new Arduino(_debug);
-		_interpreter = new Interpreter(_arduino, _debug);
+		_interpreter = new Interpreter(_arduino, pGenerate, _debug);
 
-		this.parseTxt("test.txt");
+		// this.parseTxt("test.txt");
 	}
 
 
@@ -50,17 +43,6 @@ public class Core {
 		_interpreter.insertVar(pVar, pValue);
 	}
 
-
-
-	public void parseTxt(String pFileName) {
-		try {
-			_lexical.setReader(new FileReader(pFileName));
-			_sintactic.analizarTxt("test.txt");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-	}
 
 
 

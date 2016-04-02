@@ -1,1 +1,3 @@
-centro repite 60 [av 70 repite 9 [bl ] re 50 ]
+haz "veces 500 
+centro 
+repite 2 [av :veces repite 4 [bl ] re 50 ]

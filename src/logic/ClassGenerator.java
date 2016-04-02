@@ -36,7 +36,7 @@ public class ClassGenerator implements ConstantsLogic {
 		File file = new File(pFileName);
 		if (file.exists()) {
 			if (pDebug) System.out.println(CLASS_GENERATOR + GENER_MOVE_FILE + file);
-			String newDir = PROJECT_SRC_PATH + SLASH + PROJECT_LOGIC_PACKAGE + SLASH
+			String newDir = PROJECT_SRC_PATH + SLASH + PROJECT_INTERPRETER_PACKAGE + SLASH
 					+ file.getName();
 			File archViejo = new File(newDir);
 			archViejo.delete();

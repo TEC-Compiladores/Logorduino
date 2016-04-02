@@ -1,6 +1,6 @@
 /* ############## Codigo de usuario ############## */
 
-package logic;
+package logic.interpreter;
 
 import java_cup.runtime.*;
 import java.io.Reader;
