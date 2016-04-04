@@ -1,3 +1,6 @@
-haz "veces 500 
-centro 
-repite 2 [av :veces repite 4 [bl ] re 50 ]
+av 90
+re 50
+sl
+bl
+ponpos [90 90]
+repite 2 [ repite 4 [gd 0 centro ] ponrumbo 2]

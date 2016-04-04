@@ -4,10 +4,21 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.LinkedList;
+import java.util.Queue;
 
+/**
+ * 
+ * @author Juan Pablo Brenes
+ *         3/4/2016
+ * 
+ *         Clase que permite la comunicación con el arduino
+ *
+ */
 
 public class Arduino implements ConstantsServer {
 
+	private Queue<String> _queue;
 	private String _ip;
 	private int _port;
 	private Socket _socket;
@@ -24,7 +35,8 @@ public class Arduino implements ConstantsServer {
 	 * @param pDebug
 	 */
 	public Arduino(boolean pDebug) {
-		this._connected = false;
+		this._connected = true;
+		_queue = new LinkedList<String>();
 		_debug = pDebug;
 	}
 
@@ -48,15 +60,12 @@ public class Arduino implements ConstantsServer {
 			this._connected = true;
 			_out = new PrintWriter(_socket.getOutputStream(), true);
 			_out.println("3Test");
-			if (_debug)
-				System.out.println(ARDUINO_CLASS + ARDUINO_SUCCESSFUL_CONNECTION);
+			if (_debug) System.out.println(ARDUINO_CLASS + ARDUINO_SUCCESSFUL_CONNECTION);
 
 		} catch (UnknownHostException e) {
-			if (_debug)
-				System.err.println(ARDUINO_CLASS + ARDUINO_ERROR_CONNECTION);
+			if (_debug) System.err.println(ARDUINO_CLASS + ARDUINO_ERROR_CONNECTION);
 		} catch (IOException e) {
-			if (_debug)
-				System.err.println(ARDUINO_CLASS + ARDUINO_ERROR_IO);
+			if (_debug) System.err.println(ARDUINO_CLASS + ARDUINO_ERROR_IO);
 		}
 
 		return _connected;
@@ -65,16 +74,38 @@ public class Arduino implements ConstantsServer {
 
 
 	/**
-	 * Método para enviar un mensaje al arduino
+	 * Método que agrega mensajes a la cola de mensajes
 	 * 
 	 * @param pMessage
-	 *            Mensaje a enviar
+	 *            Mensaje para agregar en la cola
 	 */
-	public void sendMessage(String pMessage) {
+	public void addToQueue(String pMessage) {
+		_queue.add(pMessage);
+	}
+
+
+
+	/**
+	 * Método que comienza a enviar los mensaje al arduino para su ejecución
+	 */
+	public void sendMessages() {
 		if (this._connected) {
-			if (_debug)
-				System.out.println(ARDUINO_CLASS + ARDUINO_MESSAGE_SEND + pMessage);
-			_out.println(pMessage);
+			long timeInit = System.currentTimeMillis();
+
+			while (!_queue.isEmpty()) {
+				long timeFinal = System.currentTimeMillis();
+
+				if ((timeFinal - timeInit) > 1000) {
+					String message = _queue.poll();
+					// _out.println(message);
+					if (_debug) System.out.println(ARDUINO_CLASS + ARDUINO_MESSAGE_SEND + message);
+					timeInit = System.currentTimeMillis();
+				}
+
+			}
+
 		}
 	}
+
+
 }

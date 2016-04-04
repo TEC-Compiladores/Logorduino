@@ -21,5 +21,7 @@ public interface ConstInterpreter {
 	public static final int CMD_BL = 8;
 	public static final int CMD_HAZ = 9;
 
+	public static final String SEPARATION_CHAR = "#";
+
 
 }

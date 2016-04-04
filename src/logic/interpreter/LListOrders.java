@@ -2,8 +2,6 @@ package logic.interpreter;
 
 import java.util.ArrayList;
 
-import logic.ConstantsLogic;
-
 /**
  * @author Juan Pablo Brenes 2/4/2016
  * 
@@ -14,10 +12,9 @@ import logic.ConstantsLogic;
  *
  */
 
-public class LListOrders implements ConstantsLogic {
+public class LListOrders implements ConstInterpreter {
 
 	private int _command;
-	// private LParameters _parameters;
 	private Number[] _parametersValues;
 	private ArrayList<Object> _parametersIn;
 
@@ -38,45 +35,84 @@ public class LListOrders implements ConstantsLogic {
 
 
 
-	public void prepare() {
+	/**
+	 * Método que se ejecuta cuando la orden ingresada por el usuario es el
+	 * comando "haz" que permite crear una variable
+	 * 
+	 * Se validan los siguiente casos:
+	 * ** Si la variable a crear no existe:
+	 * -----Si el valor es un número se inserta el par nombre/valor
+	 * -----Si el valor es una variable se comprueba si existe y se copia su
+	 * -----valor a la nueva variable, sino es un error
+	 * 
+	 * ** Si la variable a crear existe:
+	 * -----Se comprueban los dos casos anteriores con la diferencia que la
+	 * -----variable se sobrescribe
+	 */
+	public void commandHaz() {
+		String varName = (String) _parametersIn.get(0);
+		Object varValue = _parametersIn.get(1);
 
-		// if (_command == CMD_HAZ) {
-		// if (_parametersIn.get(1) instanceof String) {
-		// Number value = Interpreter._variables.get((String)
-		// _parametersIn.get(1));
-		// if (value != null) {
-		// _parametersIn.remove(1);
-		// _parametersIn.add(1, value);
-		// }
-		// else {
-		// // ERROR
-		// }
-		// }
-		// }
-		//
-		// else
-		// _parametersValues = (Number[]) _parameters.getParameters(false);
+
+		// Si la variable no existe
+		if (Interpreter._variables.get(varName) == null) {
+			if (varValue instanceof Number) {// Si el valor es un numero
+				Interpreter._variables.put(varName, ((Number) varValue));
+			}
+			else {// Si el valor es el valor de otra variable
+				Number referValue = Interpreter._variables.get(((String) varValue));
+				if (referValue == null)// Si la variable del valor no existe
+					System.err.println("Error: Variable " + ((String) varValue) + " no existe");
+				else
+					// Si la variable del valor existe
+					Interpreter._variables.put(varName, referValue);
+			}
+		}
+
+		else { // Si la variable existe se reemplaza su valor
+			if (varValue instanceof Number) // Si el valor es un número
+				Interpreter._variables.replace(varName, ((Number) varValue));
+			else {// Si el valor es el valor de otra variable
+				Number referValue = Interpreter._variables.get(((String) varValue));
+				if (referValue == null) // Si la variable del valor no existe
+					System.err.println("Error: Variable " + ((String) varValue) + " no existe");
+				else
+					// Si la variable del valor existe
+					Interpreter._variables.replace(varName, referValue);
+			}
+
+		}
 	}
 
 
 
-	private void obtainValues() {
+	/**
+	 * Método que prepara el comando a ejecutar
+	 * Obtiene los parámetros (si necesita) necesarios para que el comando se
+	 * ejecute correctamente
+	 */
+	public void prepare() {
 		if (_parametersIn != null) {
+
+			if (_command == CMD_HAZ) {
+				this.commandHaz();
+				return;
+			}
+
 			_parametersValues = new Number[_parametersIn.size()];
 			for (int i = 0; i < _parametersIn.size(); i++) {
 
 				if (_parametersIn.get(i) instanceof Number)
 					_parametersValues[i] = (Number) _parametersIn.get(i);
+
 				else {
 					Number param = Interpreter._variables.get(((String) _parametersIn.get(i)));
 					if (param != null)
 						_parametersValues[i] = param;
 					else {
-						if (_command != CMD_HAZ) {
-							System.err.println("Variable: \"" + (String) _parametersIn.get(i)
-									+ "\" no definida");
-							System.exit(1);
-						}
+						System.err.println("Variable: \"" + (String) _parametersIn.get(i)
+								+ "\" no definida");
+						System.exit(1); // //////////////////////////////////////////////////////////////////CAMBIAR
 					}
 				}
 			}
@@ -87,39 +123,44 @@ public class LListOrders implements ConstantsLogic {
 
 	/**
 	 * Método que crea un mensaje (string) con la constante del comando a
-	 * ejecutar, junto con sus respectivos parametros
+	 * ejecutar, junto con sus respectivos parámetros
 	 * 
-	 * Este mensaje se envia al arduino para que se realize la acción
+	 * El mensaje creado se agrega a la cola de mensajes que deben ser enviados
+	 * al arduino para que este los ejecute
 	 */
 	public void execute() {
-		this.obtainValues();
 		StringBuilder message = new StringBuilder(String.valueOf(_command));
 
-		if (_command == CMD_HAZ) {
-			Interpreter._variables
-					.put((String) _parametersIn.get(0), (Number) _parametersIn.get(1));
-		}
+		if (_command != CMD_HAZ) {
 
-
-		else if (_command != CMD_BL && _command != CMD_SL && _command != CMD_CENTER) {
-			if (_command == CMD_POS) {
-				message.append("#");
-				message.append(_parametersValues[0]);
-				message.append("#");
-				message.append(_parametersValues[1]);
-			}
-			else {
-				message.append("#");
-				message.append(_parametersValues[0]);
+			if (_command != CMD_BL && _command != CMD_SL && _command != CMD_CENTER) {
+				if (_command == CMD_POS) {
+					message.append(SEPARATION_CHAR);
+					message.append(_parametersValues[0]);
+					message.append(SEPARATION_CHAR);
+					message.append(_parametersValues[1]);
+				}
+				else {
+					message.append(SEPARATION_CHAR);
+					message.append(_parametersValues[0]);
+				}
 			}
 
-			// /ENVIAR MENSAJE AL ARDUINO
+			Interpreter.messageForArduino(message.toString());
 		}
 
-		else {
-			// ENVIAR MENSAJE
-		}
+		if (Interpreter._debug) this.printDebug();
 
+
+
+	}
+
+
+
+	/**
+	 * Imprime información de debug
+	 */
+	private void printDebug() {
 		switch (_command) {
 			case CMD_AV:
 				System.out.println("EJECUTE: Avanzar " + _parametersValues[0]);
@@ -152,6 +193,5 @@ public class LListOrders implements ConstantsLogic {
 				System.out.println("EJECUTE: Sube Lapiz");
 				break;
 		}
-
 	}
 }

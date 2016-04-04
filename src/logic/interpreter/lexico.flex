@@ -47,12 +47,15 @@ import java.io.Reader;
 
 Salto = \r|\n|\r\n
    
-Espacio = {Salto} | [ \t\f]
+Espacio = [ \t\f]
+
+Linea_vacia = {Salto}+{Espacio}+|{Espacio}+{Salto}+|{Salto}*{Espacio}+|{Salto}+{Espacio}*
+
 
 Entero = 0 | [1-9][0-9]*
-Flotante = 0 | 0\.{Entero} | {Entero}\.{Entero}
+Flotante = 0 | 0\.{Entero}+ | {Entero}+\.{Entero}+
 
-Identificador = [A-Z|a-z]+[Entero]*
+Identificador = [A-Za-z_]+{Entero}*
 
 Variable = \"{Identificador}
 Parametro = :{Identificador}
@@ -103,11 +106,15 @@ Parametro = :{Identificador}
   
   {Espacio}				{ return symbol(sym.ESPACIO); }
   
+  {Salto}				{ return symbol(sym.SALTO); }
+  
   {Flotante}				{ return symbol(sym.FLOAT, new Float(Float.parseFloat(yytext()))); }
   
   {Entero}				{ return symbol(sym.ENTERO, new Integer(yytext())); }
   
-  {Identificador}			{ return symbol(sym.FUNC, new String(yytext())); }  
+  {Identificador}			{ return symbol(sym.FUNC, new String(yytext())); } 
+  
+  {Linea_vacia}				{ return symbol(sym.LINEA_VACIA); }
   
 }
 

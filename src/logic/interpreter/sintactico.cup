@@ -43,12 +43,9 @@ parser code{:
       	LProgram result = (LProgram) resultado;
       	result.prepare();
       	result.execute();
+      	_interpreter.sendToArduino();
+      	System.out.println("SE EJECUTO UN LPROGRAM");
       }
-      else{
-      	LPartialOrder result = (LPartialOrder) resultado;
-      	result.prepare();
-      	result.execute();
-      } 
       if(_debug)
 	System.out.println(ConstInterpreter.SIN_FINISH_PARSE_TXT + pFileName);
     } catch(Exception e) {
@@ -59,10 +56,17 @@ parser code{:
   
   
   
-  public void analizarEntrada(StringReader pReader){
+  public void analizarEntrada(){
     try {
-      SintacticParser sintactico = new SintacticParser(new LexicalParser(pReader));
-      Object resultado = sintactico.parse().value;
+      //SintacticParser sintactico = new SintacticParser(new LexicalParser(pReader));
+      Object resultado = this.parse().value;
+      if(resultado instanceof LProgram){
+      	LProgram result = (LProgram) resultado;
+      	result.prepare();
+      	result.execute();
+      	_interpreter.sendToArduino();
+      	System.out.println("SE EJECUTO UN LPROGRAM");
+      }
       if(_debug)
 	System.out.println(ConstInterpreter.SIN_FINISH_PARSE_ENTRY);
     } catch(Exception e) {
@@ -92,6 +96,7 @@ parser code{:
     
     string.append(" : " + pMessage);
     System.err.println(string);
+    System.exit(1);
   }
   
   
@@ -136,7 +141,7 @@ terminal FIN, AV, RE, GD, GI, REPITE, PON_POS, PON_RUMBO, CENTRO;
 terminal HAZ, PARA, SB_LAPIZ, BJ_LAPIZ;
 
 /* Caracteres */
-terminal PC_IZQ, PC_DER, ESPACIO;
+terminal PC_IZQ, PC_DER, ESPACIO, SALTO, LINEA_VACIA;
 
 /* Variables, parametros, nombre de funciones y valor de enteros */
 terminal String VAR, PARAM, FUNC;
@@ -151,7 +156,8 @@ non terminal LOrder orden;
 non terminal LListOrders listaOrdenes;
 
 non terminal Object param;
-non terminal Object espacios;
+non terminal Object espacios, saltos, espacios_saltos;
+non terminal String procedimiento, paramList;
 
 
 
@@ -165,18 +171,18 @@ non terminal Object espacios;
  * o varios comandos seguidos por espacio
  */
 programa ::= programa:p ordenParcial:o
-				{: RESULT = new LProgram(p, o); 
-				   //System.out.println("PROGRAMA"); :}
+				{: RESULT = new LProgram(p, o); :}
 			 |
 			 ordenParcial:o
-			 	{: RESULT = new LProgram(o); 
-			 	//System.out.println("ORDEN PARCIAL"); :}
+			 	{: RESULT = new LProgram(o); :}
+			 |
+			 procedimiento:p
+			 	{: System.out.println(p); :}
 			 ;
 
 ordenParcial ::= 
 		 orden:s
-		   {: RESULT = new LPartialOrder(s);
-		      //System.out.println(s); :}
+		   {: RESULT = new LPartialOrder(s); :}
 		 ;
 
 
@@ -188,78 +194,89 @@ ordenParcial ::=
  * ** Una lista de comandos
  */
 orden ::= 
-	  REPITE espacios param:p espacios PC_IZQ programa:r PC_DER espacios
+	  REPITE espacios param:p espacios PC_IZQ espacios_saltos programa:r PC_DER espacios_saltos
 	    {: LRepeat repeat = new LRepeat(p, r);
-	       RESULT = new LOrder(repeat);
-	       //RESULT = new String("REPETI " + p.intValue() + " veces "  ); :}
+	       RESULT = new LOrder(repeat); :}
 	  |
 	  listaOrdenes:s
-	    {: RESULT = new LOrder(s);
-	       //RESULT = s; :}
+	    {: RESULT = new LOrder(s); :}
 	  ;
 	      
 	      
-	      
+/**
+ * Son todas las ordenes simples del lenguaje, que reciben parametros constantes
+ * o variables
+ *
+ * La orden repite no se encuentra en esta lista porque no recibe parametros constantes
+ * sino una serie de ordenes
+ */ 	      
 listaOrdenes ::= 
-		 PON_POS espacios PC_IZQ param:p espacios param:t PC_DER espacios
+		 PON_POS espacios PC_IZQ espacios_saltos param:p espacios param:t espacios_saltos PC_DER espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p); params.add(t);
-		      RESULT = new LListOrders(ConstInterpreter.CMD_POS, params); 
-		      //RESULT = new String("ME MOVI A X: " + p.intValue() + " Y: " + t.intValue()); :}
+		      RESULT = new LListOrders(ConstInterpreter.CMD_POS, params); :}
 		 |
-		 AV espacios param:p espacios
+		 AV espacios param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
-		   	  RESULT = new LListOrders(ConstInterpreter.CMD_AV, params); 
-		   	  //RESULT = new String("AVANCE: " + p.intValue()); :}
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_AV, params); :}
 		 |
-		 RE espacios param:p espacios
+		 RE espacios param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
-		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RE, params);  
-		   //RESULT = new String("RETROCEDI: " + p.intValue()); :}
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RE, params); :}
 		 |
-		 GD espacios param:p espacios
+		 GD espacios param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
-		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GD, params);  
-		      //RESULT = new String("GIRE " + p.intValue() + " A LA DERECHA"); :}
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GD, params); :}
 		 |
-		 GI espacios param:p espacios
+		 GI espacios param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
-		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GI, params);  
-		      //RESULT = new String("GIRE " + p.intValue() + " A LA IZQUIERDA"); :}
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GI, params); :}
 		 |
-		 PON_RUMBO espacios param:p espacios
+		 PON_RUMBO espacios param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
-		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RUMBO, params);  
-		      //RESULT = new String("GIRE: " + p.intValue() + " grados"); :}
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RUMBO, params); :}
 		 |
-		 CENTRO espacios
-		   {: RESULT = new LListOrders(ConstInterpreter.CMD_CENTER, null);  
-		      //RESULT = new String("ME COLOQUE EN EL CENTRO"); :}
+		 CENTRO espacios_saltos
+		   {: RESULT = new LListOrders(ConstInterpreter.CMD_CENTER, null); :}
 		 |
-		 SB_LAPIZ espacios
-		   {: RESULT = new LListOrders(ConstInterpreter.CMD_SL, null);  
-		      //RESULT = new String("SUBI EL LAPIZ"); :}
+		 SB_LAPIZ espacios_saltos
+		   {: RESULT = new LListOrders(ConstInterpreter.CMD_SL, null); :}
 		 |
-		 BJ_LAPIZ espacios
-		   {: RESULT = new LListOrders(ConstInterpreter.CMD_BL, null);  
-		      //RESULT = new String("BAJE EL LAPIZ"); :}
+		 BJ_LAPIZ espacios_saltos
+		   {: RESULT = new LListOrders(ConstInterpreter.CMD_BL, null); :}
 		 |
- 		 HAZ espacios VAR:f espacios param:p espacios
+ 		 HAZ espacios VAR:f espacios param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(f); params.add(p);
-		   	  RESULT = new LListOrders(ConstInterpreter.CMD_HAZ, params);   
-		      //RESULT = new String("Variable: " + f + " Valor: " + p); :}
+		   	  RESULT = new LListOrders(ConstInterpreter.CMD_HAZ, params); :}
+		 |
+		 ENTERO:e {: System.out.println("No me has dicho que hacer con: " + e); System.exit(1); :}
 		 |
 		 error
 		 ;
+		 
+		 
+procedimiento ::=
+				PARA espacios FUNC:f espacios_saltos
+					{: RESULT = new String("Crear el procedimiento: " + f); :}
+				|
+				PARA espacios FUNC:t espacios paramList espacios_saltos
+					{: RESULT = new String("Crear el procedimiento: " + t + " con variables"); :}
+				;
   
 	  
-	     
+/**
+ * Un parametro puede ser:
+ *
+ * ** Un entero
+ * ** Un float
+ * ** Un identificador con el nombre de una variable creada
+ */	     
 param ::=
 	  FLOAT:p
 	    {: RESULT = new Float(p); :}
@@ -272,11 +289,38 @@ param ::=
 	  ;
 	  
 	  
+	  
+paramList ::= 
+			paramList:l espacios PARAM:p
+				{: System.out.println("Parametros: " + ((String)l) + " " + ((String)p) ); :}
+			|
+			PARAM:p 
+				{: System.out.println("Parametro: " + ((String)p)); :}
+			;
+	  
+
+	  
 espacios ::=
 	     espacios ESPACIO
 	     |
-	     ESPACIO
+	     /* epsilon */
 	     ;
+	     
+saltos ::=
+		   saltos SALTO
+		   |
+		   SALTO
+		   ;
+		   
+	     
+	     
+espacios_saltos ::=
+					saltos espacios
+					|
+					espacios
+					|
+					LINEA_VACIA
+					;
 	     
 	  
 	     
