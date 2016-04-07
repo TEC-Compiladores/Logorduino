@@ -16,6 +16,7 @@ interface ConstantsServer {
 
 	// NOTIFICATION
 	public static final String ARDUINO_SUCCESSFUL_CONNECTION = "Conexión exitosa con el arduino";
+	public static final String ARDUINO_NOT_CONNECTED = "No hay conexión con el arduino";
 
 	//
 	public static final String ARDUINO_CLASS = "ARDUINO >> ";

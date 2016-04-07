@@ -1,6 +1,3 @@
-av 90
-re 50
-sl
-bl
-ponpos [90 90]
-repite 2 [ repite 4 [gd 0 centro ] ponrumbo 2]
+av   90
+re    80
+ponpos		[90 90]

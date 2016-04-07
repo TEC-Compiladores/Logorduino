@@ -21,6 +21,7 @@ parser code{:
   public Interpreter _interpreter;
   
   private boolean _debug = false;
+  private boolean _error = false;
   
   
   public SintacticParser(Interpreter pInterpreter, java_cup.runtime.Scanner pScanner, boolean pDebug){
@@ -38,8 +39,9 @@ parser code{:
     public void analizarTxt(String pFileName){
     try {
       //SintacticParser sintactico = new SintacticParser(new LexicalParser(new FileReader(pFileName)));
-      Object resultado = this.parse().value;
-      if(resultado instanceof LProgram){
+      Symbol parseResult = this.parse();
+      if(parseResult != null){
+      	Object resultado = parseResult.value;
       	LProgram result = (LProgram) resultado;
       	result.prepare();
       	result.execute();
@@ -59,8 +61,9 @@ parser code{:
   public void analizarEntrada(){
     try {
       //SintacticParser sintactico = new SintacticParser(new LexicalParser(pReader));
-      Object resultado = this.parse().value;
-      if(resultado instanceof LProgram){
+      Symbol parseResult = this.parse();
+      if(parseResult != null){
+        Object resultado = parseResult.value;
       	LProgram result = (LProgram) resultado;
       	result.prepare();
       	result.execute();
@@ -70,8 +73,28 @@ parser code{:
       if(_debug)
 	System.out.println(ConstInterpreter.SIN_FINISH_PARSE_ENTRY);
     } catch(Exception e) {
+     
+    }
+  }
+  
+  
+  public LProgram analizarProc(){
+  	Symbol parseResult = null;
+  	try {
+      parseResult = this.parse();
+    } catch(Exception e) {
       e.printStackTrace();
     }
+    
+    if(parseResult != null){
+    	Object resultado = parseResult.value;
+      	LProgram result = (LProgram) resultado;
+      	return result;
+    }
+    else{
+      	return null;
+    }
+  
   }
   
 
@@ -95,8 +118,8 @@ parser code{:
     }
     
     string.append(" : " + pMessage);
-    System.err.println(string);
-    System.exit(1);
+    //System.err.println(string);
+    _interpreter.displayError(pMessage);
   }
   
   
@@ -106,7 +129,6 @@ parser code{:
    */    
   public void report_fatal_error(String pMessage, Object pInfo) {
     report_error(pMessage, pInfo);
-    System.exit(1);
   }
   
   
@@ -154,6 +176,7 @@ non terminal LProgram programa;
 non terminal LPartialOrder ordenParcial;
 non terminal LOrder orden;
 non terminal LListOrders listaOrdenes;
+non terminal LParameters valueList;
 
 non terminal Object param;
 non terminal Object espacios, saltos, espacios_saltos;
@@ -177,7 +200,6 @@ programa ::= programa:p ordenParcial:o
 			 	{: RESULT = new LProgram(o); :}
 			 |
 			 procedimiento:p
-			 	{: System.out.println(p); :}
 			 ;
 
 ordenParcial ::= 
@@ -211,32 +233,32 @@ orden ::=
  * sino una serie de ordenes
  */ 	      
 listaOrdenes ::= 
-		 PON_POS espacios PC_IZQ espacios_saltos param:p espacios param:t espacios_saltos PC_DER espacios_saltos
+		 PON_POS espacios_saltos PC_IZQ espacios_saltos param:p espacios param:t espacios_saltos PC_DER espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p); params.add(t);
 		      RESULT = new LListOrders(ConstInterpreter.CMD_POS, params); :}
 		 |
-		 AV espacios param:p espacios_saltos
+		 AV espacios_saltos param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
 		   	  RESULT = new LListOrders(ConstInterpreter.CMD_AV, params); :}
 		 |
-		 RE espacios param:p espacios_saltos
+		 RE espacios_saltos param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
 		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RE, params); :}
 		 |
-		 GD espacios param:p espacios_saltos
+		 GD espacios_saltos param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
 		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GD, params); :}
 		 |
-		 GI espacios param:p espacios_saltos
+		 GI espacios_saltos param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
 		   	  RESULT = new LListOrders(ConstInterpreter.CMD_GI, params); :}
 		 |
-		 PON_RUMBO espacios param:p espacios_saltos
+		 PON_RUMBO espacios_saltos param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(p);
 		   	  RESULT = new LListOrders(ConstInterpreter.CMD_RUMBO, params); :}
@@ -250,25 +272,38 @@ listaOrdenes ::=
 		 BJ_LAPIZ espacios_saltos
 		   {: RESULT = new LListOrders(ConstInterpreter.CMD_BL, null); :}
 		 |
- 		 HAZ espacios VAR:f espacios param:p espacios_saltos
+ 		 HAZ espacios_saltos VAR:f espacios param:p espacios_saltos
 		   {: ArrayList<Object> params = new ArrayList<Object>();
 		   	  params.add(f); params.add(p);
 		   	  RESULT = new LListOrders(ConstInterpreter.CMD_HAZ, params); :}
 		 |
-		 ENTERO:e {: System.out.println("No me has dicho que hacer con: " + e); System.exit(1); :}
+		 FUNC:f espacios_saltos
+		 	{: System.out.println("METODO: " + f);
+		 	   LProgram program = parser._interpreter.parseProcedure(f);
+		 	   if(program != null){
+		 	   		RESULT = new LListOrders(program);
+		 	   }
+		 	   else {
+		 	   		parser.report_error("Procedimiento: \"" + f + "\" no definido",null);
+		 	   		parser.done_parsing();
+		 	   }
+		 	   :}
 		 |
-		 error
+		 ENTERO:e 
+		 	{: 	parser.report_error("No me has dicho que hacer con: " + e, null);
+		 		parser.done_parsing(); :}
 		 ;
 		 
 		 
+		 
 procedimiento ::=
-				PARA espacios FUNC:f espacios_saltos
-					{: RESULT = new String("Crear el procedimiento: " + f); :}
-				|
-				PARA espacios FUNC:t espacios paramList espacios_saltos
-					{: RESULT = new String("Crear el procedimiento: " + t + " con variables"); :}
+				PARA espacios_saltos FUNC:f espacios_saltos
+					{: 	parser._interpreter.createProcedure(f);
+					    parser.done_parsing(); :}
 				;
-  
+		
+		
+
 	  
 /**
  * Un parametro puede ser:
@@ -302,9 +337,10 @@ paramList ::=
 	  
 espacios ::=
 	     espacios ESPACIO
-	     |
-	     /* epsilon */
+		 |
+		 /* epsilon */
 	     ;
+	     
 	     
 saltos ::=
 		   saltos SALTO
@@ -324,18 +360,6 @@ espacios_saltos ::=
 	     
 	  
 	     
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

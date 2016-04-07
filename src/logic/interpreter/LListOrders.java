@@ -17,6 +17,7 @@ public class LListOrders implements ConstInterpreter {
 	private int _command;
 	private Number[] _parametersValues;
 	private ArrayList<Object> _parametersIn;
+	private LProgram _program;
 
 
 
@@ -31,6 +32,13 @@ public class LListOrders implements ConstInterpreter {
 	public LListOrders(int pCommand, ArrayList<Object> pParams) {
 		_command = pCommand;
 		_parametersIn = pParams;
+	}
+
+
+
+	public LListOrders(LProgram pProgram) {
+		_program = pProgram;
+		_parametersIn = null;
 	}
 
 
@@ -61,8 +69,12 @@ public class LListOrders implements ConstInterpreter {
 			}
 			else {// Si el valor es el valor de otra variable
 				Number referValue = Interpreter._variables.get(((String) varValue));
-				if (referValue == null)// Si la variable del valor no existe
-					System.err.println("Error: Variable " + ((String) varValue) + " no existe");
+				if (referValue == null) {// Si la variable del valor no existe
+					String message = "Variable \"" + ((String) varValue) + "\" no existe";
+					Interpreter.displayError(message);
+					// System.err.println("Error: Variable " + ((String)
+					// varValue) + " no existe");
+				}
 				else
 					// Si la variable del valor existe
 					Interpreter._variables.put(varName, referValue);
@@ -74,8 +86,12 @@ public class LListOrders implements ConstInterpreter {
 				Interpreter._variables.replace(varName, ((Number) varValue));
 			else {// Si el valor es el valor de otra variable
 				Number referValue = Interpreter._variables.get(((String) varValue));
-				if (referValue == null) // Si la variable del valor no existe
-					System.err.println("Error: Variable " + ((String) varValue) + " no existe");
+				if (referValue == null) { // Si la variable del valor no existe
+					String message = "Variable \"" + ((String) varValue) + "\" no existe";
+					Interpreter.displayError(message);
+					// System.err.println("Error: Variable " + ((String)
+					// varValue) + " no existe");
+				}
 				else
 					// Si la variable del valor existe
 					Interpreter._variables.replace(varName, referValue);
@@ -93,7 +109,6 @@ public class LListOrders implements ConstInterpreter {
 	 */
 	public void prepare() {
 		if (_parametersIn != null) {
-
 			if (_command == CMD_HAZ) {
 				this.commandHaz();
 				return;
@@ -110,13 +125,16 @@ public class LListOrders implements ConstInterpreter {
 					if (param != null)
 						_parametersValues[i] = param;
 					else {
-						System.err.println("Variable: \"" + (String) _parametersIn.get(i)
-								+ "\" no definida");
-						System.exit(1); // //////////////////////////////////////////////////////////////////CAMBIAR
+						String message = "Variable: \"" + (String) _parametersIn.get(i)
+								+ "\" no definida";
+						Interpreter.displayError(message);
+
 					}
 				}
 			}
 		}
+
+		else if (_program != null) _program.prepare();
 	}
 
 
@@ -129,27 +147,34 @@ public class LListOrders implements ConstInterpreter {
 	 * al arduino para que este los ejecute
 	 */
 	public void execute() {
-		StringBuilder message = new StringBuilder(String.valueOf(_command));
 
-		if (_command != CMD_HAZ) {
-
-			if (_command != CMD_BL && _command != CMD_SL && _command != CMD_CENTER) {
-				if (_command == CMD_POS) {
-					message.append(SEPARATION_CHAR);
-					message.append(_parametersValues[0]);
-					message.append(SEPARATION_CHAR);
-					message.append(_parametersValues[1]);
-				}
-				else {
-					message.append(SEPARATION_CHAR);
-					message.append(_parametersValues[0]);
-				}
-			}
-
-			Interpreter.messageForArduino(message.toString());
+		if (_program != null) {
+			_program.execute();
 		}
 
-		if (Interpreter._debug) this.printDebug();
+		else {
+			StringBuilder message = new StringBuilder(String.valueOf(_command));
+
+			if (_command != CMD_HAZ) {
+
+				if (_command != CMD_BL && _command != CMD_SL && _command != CMD_CENTER) {
+					if (_command == CMD_POS) {
+						message.append(SEPARATION_CHAR);
+						message.append(_parametersValues[0]);
+						message.append(SEPARATION_CHAR);
+						message.append(_parametersValues[1]);
+					}
+					else {
+						message.append(SEPARATION_CHAR);
+						message.append(_parametersValues[0]);
+					}
+				}
+
+				Interpreter.messageForArduino(message.toString());
+			}
+
+			if (Interpreter._debug) this.printDebug();
+		}
 
 
 

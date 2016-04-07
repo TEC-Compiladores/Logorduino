@@ -16,7 +16,7 @@ import java.util.Queue;
  *
  */
 
-public class Arduino implements ConstantsServer {
+public class Arduino implements Runnable, ConstantsServer {
 
 	private Queue<String> _queue;
 	private String _ip;
@@ -24,7 +24,8 @@ public class Arduino implements ConstantsServer {
 	private Socket _socket;
 	private PrintWriter _out;
 	private boolean _connected;
-	boolean _debug;
+	private boolean _running;
+	private boolean _debug;
 
 
 
@@ -85,26 +86,65 @@ public class Arduino implements ConstantsServer {
 
 
 
+
+
 	/**
 	 * Método que comienza a enviar los mensaje al arduino para su ejecución
 	 */
 	public void sendMessages() {
+		// _running = true;
+		// if (this._connected) {
+		// long timeInit = System.currentTimeMillis();
+		//
+		// while (_running) {
+		// long timeFinal = System.currentTimeMillis();
+		//
+		// if ((timeFinal - timeInit) > 1000) {
+		// if (!_queue.isEmpty()) {
+		// String message = _queue.poll();
+		// // _out.println(message);
+		// if (_debug)
+		// System.out.println(ARDUINO_CLASS + ARDUINO_MESSAGE_SEND + message);
+		// timeInit = System.currentTimeMillis();
+		// }
+		// else
+		// _running = false;
+		// }
+		//
+		// }
+		//
+		// }
+		_running = true;
+		this.run();
+	}
+
+
+
+	@Override
+	public void run() {
+
 		if (this._connected) {
 			long timeInit = System.currentTimeMillis();
 
-			while (!_queue.isEmpty()) {
+			while (_running) {
 				long timeFinal = System.currentTimeMillis();
-
 				if ((timeFinal - timeInit) > 1000) {
-					String message = _queue.poll();
-					// _out.println(message);
-					if (_debug) System.out.println(ARDUINO_CLASS + ARDUINO_MESSAGE_SEND + message);
-					timeInit = System.currentTimeMillis();
+					if (!_queue.isEmpty()) {
+						String message = _queue.poll();
+						// _out.println(message);
+						if (_debug)
+							System.out.println(ARDUINO_CLASS + ARDUINO_MESSAGE_SEND + message);
+						timeInit = System.currentTimeMillis();
+					}
+					else
+						_running = false;
 				}
-
 			}
-
 		}
+		else {
+			if (_debug) System.out.println(ARDUINO_CLASS + ARDUINO_NOT_CONNECTED);
+		}
+
 	}
 
 

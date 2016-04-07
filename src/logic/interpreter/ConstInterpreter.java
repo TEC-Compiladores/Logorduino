@@ -1,5 +1,7 @@
 package logic.interpreter;
 
+import logic.ConstantsLogic;
+
 
 public interface ConstInterpreter {
 
@@ -22,6 +24,10 @@ public interface ConstInterpreter {
 	public static final int CMD_HAZ = 9;
 
 	public static final String SEPARATION_CHAR = "#";
+
+	//
+	public static final String TEMP_FOLDER = ConstantsLogic.PROJECT_PATH + ConstantsLogic.SLASH
+			+ "temp" + ConstantsLogic.SLASH;
 
 
 }

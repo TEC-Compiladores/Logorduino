@@ -2,6 +2,7 @@ package logic;
 
 import logic.interpreter.Interpreter;
 import logic.server.Arduino;
+import facade.Facade;
 
 /**
  * 
@@ -17,6 +18,8 @@ public class Core {
 	private boolean _debug;
 	private Interpreter _interpreter;
 	private Arduino _arduino;
+	private Facade _facade;
+
 
 
 
@@ -24,8 +27,17 @@ public class Core {
 	public Core(boolean pGenerate, boolean pDebug) {
 		_debug = pDebug;
 		_arduino = new Arduino(_debug);
-		_interpreter = new Interpreter(_arduino, this, pGenerate, _debug);
+		_facade = new Facade(this);
+		_interpreter = new Interpreter(_arduino, this, _facade, pGenerate, _debug);
+		_facade.initGUI();
 	}
+
+
+
+	public void parseInput(String pCommand) {
+		_interpreter.parseEntry(pCommand);
+	}
+
 
 
 }

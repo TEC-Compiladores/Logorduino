@@ -39,7 +39,7 @@ public interface ConstantsLogic {
 	public static final String PROJECT_PATH = RELATIVE_PATH.toAbsolutePath().toString();
 	public static final String PROJECT_SRC_PATH = PROJECT_PATH + SLASH + "src";
 	public static final String PROJECT_LOGIC_PACKAGE = "logic";
-	public static final String PROJECT_INTERPRETER_PACKAGE = "logic/interpreter";
+	public static final String PROJECT_INTERPRETER_PACKAGE = "logic" + SLASH + "interpreter";
 	public static final String LEX_FILE_PATH = PROJECT_SRC_PATH + SLASH
 			+ PROJECT_INTERPRETER_PACKAGE + SLASH + GENER_FLEX_FILENAME;
 	public static final String CUP_FILE_PATH = PROJECT_SRC_PATH + SLASH

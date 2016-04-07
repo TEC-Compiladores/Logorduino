@@ -1,15 +1,19 @@
 package logic.interpreter;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import logic.ClassGenerator;
 import logic.Core;
 import logic.server.Arduino;
+import facade.Facade;
 
 /**
  * 
@@ -18,10 +22,12 @@ import logic.server.Arduino;
  * 
  */
 
-public class Interpreter {
+public class Interpreter implements ConstInterpreter {
 
 	protected static Map<String, Number> _variables;
+	private ArrayList<String> _procedures;
 	protected static boolean _debug;
+	protected static Facade _facade;
 
 	private LexicalParser _lexical;
 	private SintacticParser _sintactic;
@@ -30,17 +36,17 @@ public class Interpreter {
 
 
 
-	public Interpreter(Arduino pArduino, Core pCore, boolean pGenerate, boolean pDebug) {
+	public Interpreter(Arduino pArduino, Core pCore, Facade pFacade, boolean pGenerate,
+			boolean pDebug) {
 		if (pGenerate) ClassGenerator.generate(_debug);
 		_debug = pDebug;
+		_facade = pFacade;
 		_variables = new HashMap<String, Number>();
+		_procedures = new ArrayList<String>();
 		_lexical = new LexicalParser();
 		_sintactic = new SintacticParser(this, _lexical, _debug);
 		_arduino = pArduino;
 		_core = pCore;
-
-		this.parseEntry("repite  [av 90 repite 2 [sl]]");
-
 	}
 
 
@@ -75,8 +81,69 @@ public class Interpreter {
 	 *            interfaz gráfica
 	 */
 	public void parseEntry(String pEntry) {
-		_lexical.setReader(new StringReader(pEntry));
+		// _lexical.setReader(new StringReader(pEntry));
+		_lexical.yyreset(new StringReader(pEntry));
 		_sintactic.analizarEntrada();
+	}
+
+
+
+	/**
+	 * Método que analiza el código de un procedimiento
+	 * 
+	 * @param pProcedure
+	 *            Nombre del procedimiento
+	 * @return LProgram que representa el "programa" a ejecutar
+	 */
+	public LProgram parseProcedure(String pProcedure) {
+		String procedure = this.loadProcedure(pProcedure);
+		LProgram program = null;
+
+		if (procedure == null) {
+			return null;
+		}
+		else {
+			LexicalParser lexical = new LexicalParser();
+			SintacticParser sintactic = new SintacticParser(this, lexical, true);
+			lexical.yyreset(new StringReader(procedure));
+			program = sintactic.analizarProc();
+		}
+
+		return program;
+
+
+	}
+
+
+
+	/**
+	 * Método que carga el código de un procedimiento creado
+	 * 
+	 * @param pProcedure
+	 *            Nombre del procedimiento
+	 * @return String con las lineas de codigo del procedimiento
+	 */
+	public String loadProcedure(String pProcedure) {
+		File file = new File(TEMP_FOLDER + pProcedure + ".txt");
+		StringBuilder builder = null;
+		try {
+			Scanner scanner = new Scanner(file);
+			scanner.nextLine();
+			builder = new StringBuilder();
+			while (scanner.hasNextLine()) {
+				if (!scanner.hasNext("fin")) {
+					builder.append(scanner.nextLine());
+				}
+				else
+					scanner.nextLine();
+			}
+
+		} catch (FileNotFoundException e) {
+			return null;
+		}
+
+
+		return builder.toString();
 	}
 
 
@@ -132,6 +199,25 @@ public class Interpreter {
 	 */
 	public void sendToArduino() {
 		_arduino.sendMessages();
+	}
+
+
+
+	/**
+	 * Método que indica a la GUI que debe mostrar un mensaje de error
+	 * 
+	 * @param pMessage
+	 *            Mnesaje a mostrar
+	 */
+	protected static void displayError(String pMessage) {
+		_facade.showError(pMessage);
+	}
+
+
+
+	public void createProcedure(String pProcedure) {
+		_facade.createProcedure(pProcedure);
+
 	}
 
 
