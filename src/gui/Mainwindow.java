@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import facade.Facade;
@@ -75,9 +76,19 @@ public class Mainwindow extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == _JB) {
-			new Connection(_facade);
+			// new Connection(_facade);
 			// this.setVisible(false);
-			this.dispose();
+			boolean flag = _facade.makeConnection();
+			if (flag) {
+				LogoShellWindow shell = new LogoShellWindow(_facade);
+				_facade.setShell(shell);
+				this.dispose();
+			}
+			else {
+				JOptionPane.showMessageDialog(this,
+						"No se puede establecer la conexión bluetooth con el arduino",
+						"Error de conexión", JOptionPane.ERROR_MESSAGE);
+			}
 		}
 	}
 

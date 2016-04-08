@@ -104,8 +104,8 @@ public class Connection extends JFrame implements ActionListener, Constants {
 		}
 		if (e.getSource() == _bStart) {
 			if (!client.ifConnection()) {
-				LogoShellWindow shell = new LogoShellWindow(_facade);
-				_facade.setShell(shell);
+				// LogoShellWindow shell = new LogoShellWindow(_facade);
+				// _facade.setShell(shell);
 				this.dispose();
 				// this.setVisible(false);
 			}

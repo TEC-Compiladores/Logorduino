@@ -1,4 +1,4 @@
-package logic.server;
+package logic.arduino;
 
 /**
  * @author Juan Pablo Brenes 6/3/2016

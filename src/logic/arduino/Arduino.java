@@ -1,11 +1,10 @@
-package logic.server;
+package logic.arduino;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import jssc.SerialPort;
+import jssc.SerialPortException;
 
 /**
  * 
@@ -19,10 +18,7 @@ import java.util.Queue;
 public class Arduino implements Runnable, ConstantsServer {
 
 	private Queue<String> _queue;
-	private String _ip;
-	private int _port;
-	private Socket _socket;
-	private PrintWriter _out;
+	private SerialPort _serialPort;
 	private boolean _connected;
 	private boolean _running;
 	private boolean _debug;
@@ -36,37 +32,24 @@ public class Arduino implements Runnable, ConstantsServer {
 	 * @param pDebug
 	 */
 	public Arduino(boolean pDebug) {
-		this._connected = true;
+		this._connected = false;
 		_queue = new LinkedList<String>();
 		_debug = pDebug;
 	}
 
 
 
-	/**
-	 * Método que realiza la conexión con el arduino
-	 * 
-	 * @param pIP
-	 *            IP del arduino
-	 * @param pPort
-	 *            Puerto del arduino
-	 * @return
-	 */
-	public boolean connect(String pIP, int pPort) {
-		_ip = pIP;
-		_port = pPort;
+
+	public boolean connect() {
+		_serialPort = new SerialPort("/dev/rfcomm0");
 
 		try {
-			_socket = new Socket(_ip, _port);
-			this._connected = true;
-			_out = new PrintWriter(_socket.getOutputStream(), true);
-			_out.println("3Test");
-			if (_debug) System.out.println(ARDUINO_CLASS + ARDUINO_SUCCESSFUL_CONNECTION);
-
-		} catch (UnknownHostException e) {
-			if (_debug) System.err.println(ARDUINO_CLASS + ARDUINO_ERROR_CONNECTION);
-		} catch (IOException e) {
-			if (_debug) System.err.println(ARDUINO_CLASS + ARDUINO_ERROR_IO);
+			_serialPort.openPort();
+			_serialPort.setParams(SerialPort.BAUDRATE_9600, SerialPort.DATABITS_8,
+					SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+			_connected = true;
+		} catch (SerialPortException e) {
+			_connected = false;
 		}
 
 		return _connected;
@@ -120,6 +103,20 @@ public class Arduino implements Runnable, ConstantsServer {
 
 
 
+	/**
+	 * Método que permite desconectar la conexión bluetooth entre la computadora
+	 * y el arduino
+	 */
+	public void disconnect() {
+		try {
+			_serialPort.closePort();
+		} catch (SerialPortException e) {
+			System.out.println(ARDUINO_CLASS + "Error al cerrar el puerto bluetooth");
+		}
+	}
+
+
+
 	@Override
 	public void run() {
 
@@ -128,16 +125,20 @@ public class Arduino implements Runnable, ConstantsServer {
 
 			while (_running) {
 				long timeFinal = System.currentTimeMillis();
-				if ((timeFinal - timeInit) > 1000) {
+				if ((timeFinal - timeInit) > 2000) {
 					if (!_queue.isEmpty()) {
 						String message = _queue.poll();
-						// _out.println(message);
+						try {
+							_serialPort.writeBytes((message + "\r\n").getBytes());
+						} catch (SerialPortException e) {
+							System.out.println("Error al enviar un mensaje");
+						}
 						if (_debug)
 							System.out.println(ARDUINO_CLASS + ARDUINO_MESSAGE_SEND + message);
-						timeInit = System.currentTimeMillis();
 					}
 					else
 						_running = false;
+					timeInit = System.currentTimeMillis();
 				}
 			}
 		}

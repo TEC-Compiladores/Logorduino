@@ -12,7 +12,7 @@ import java.util.Scanner;
 
 import logic.ClassGenerator;
 import logic.Core;
-import logic.server.Arduino;
+import logic.arduino.Arduino;
 import facade.Facade;
 
 /**

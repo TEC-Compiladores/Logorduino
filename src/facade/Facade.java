@@ -48,4 +48,16 @@ public class Facade {
 		_shell.create(pName);
 	}
 
+
+
+	public void disconnect() {
+		_core.disconnect();
+	}
+
+
+
+	public boolean makeConnection() {
+		return _core.makeConnection();
+	}
+
 }

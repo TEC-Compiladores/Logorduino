@@ -12,16 +12,16 @@ public interface ConstInterpreter {
 
 
 	// Arduino constants
-	public static final int CMD_AV = 0;
-	public static final int CMD_RE = 1;
-	public static final int CMD_GD = 2;
-	public static final int CMD_GI = 3;
-	public static final int CMD_POS = 4;
-	public static final int CMD_RUMBO = 5;
-	public static final int CMD_CENTER = 6;
-	public static final int CMD_SL = 7;
-	public static final int CMD_BL = 8;
-	public static final int CMD_HAZ = 9;
+	public static final int CMD_AV = 1;
+	public static final int CMD_RE = 2;
+	public static final int CMD_GD = 3;
+	public static final int CMD_GI = 4;
+	public static final int CMD_POS = 5;
+	public static final int CMD_RUMBO = 6;
+	public static final int CMD_CENTER = 7;
+	public static final int CMD_SL = 8;
+	public static final int CMD_BL = 9;
+	public static final int CMD_HAZ = 10;
 
 	public static final String SEPARATION_CHAR = "#";
 

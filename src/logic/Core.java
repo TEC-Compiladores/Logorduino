@@ -1,7 +1,7 @@
 package logic;
 
+import logic.arduino.Arduino;
 import logic.interpreter.Interpreter;
-import logic.server.Arduino;
 import facade.Facade;
 
 /**
@@ -36,6 +36,26 @@ public class Core {
 
 	public void parseInput(String pCommand) {
 		_interpreter.parseEntry(pCommand);
+	}
+
+
+
+	/**
+	 * Método que permite desconectar la conexión bluetooth entre la computadora
+	 * y el arduino
+	 */
+	public void disconnect() {
+		_arduino.disconnect();
+	}
+
+
+
+	/**
+	 * Método que realiza la conexión con el arduino
+	 */
+	public boolean makeConnection() {
+		boolean flag = _arduino.connect();
+		return flag;
 	}
 
 

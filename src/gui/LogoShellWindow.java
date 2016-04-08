@@ -401,6 +401,7 @@ public class LogoShellWindow extends JFrame implements ActionListener, ListSelec
 	public void windowClosing(WindowEvent e) {
 		// TODO Auto-generated method stub
 		borrador();
+		_facade.disconnect();
 	}
 
 
