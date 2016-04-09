@@ -125,7 +125,7 @@ public class Arduino implements Runnable, ConstantsServer {
 
 			while (_running) {
 				long timeFinal = System.currentTimeMillis();
-				if ((timeFinal - timeInit) > 2000) {
+				if ((timeFinal - timeInit) > 4000) {
 					if (!_queue.isEmpty()) {
 						String message = _queue.poll();
 						try {
